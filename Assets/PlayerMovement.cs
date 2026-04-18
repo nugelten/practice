@@ -15,6 +15,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("Налаштування огляду")]
     public float mouseSensitivity = 30f;
 
+    [Header("Звуки")]
+    public AudioSource audioSource; // Сюди перетягнути Audio Source гравця
+    public AudioClip[] footstepClips; // Масив для кількох звуків кроків
+    public float stepInterval = 0.5f; // Час між кроками
+    private float stepTimer;
+
     private Vector2 moveInput;
     private Vector2 lookInput;
     private Vector3 velocity;
@@ -71,6 +77,8 @@ public class PlayerMovement : MonoBehaviour
         Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
         controller.Move(move * speed * Time.deltaTime);
 
+        HandleFootsteps(move);
+
         // --- ГРАВІТАЦІЯ ---
         if (controller.isGrounded && velocity.y < 0)
         {
@@ -79,5 +87,37 @@ public class PlayerMovement : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    private void HandleFootsteps(Vector3 moveDirection)
+    {
+        // Якщо ми на землі і є вектор руху (гравець натискає WASD)
+        if (isGrounded && moveDirection.magnitude > 0.1f)
+        {
+            stepTimer -= Time.deltaTime;
+
+            // Коли таймер доходить до нуля, граємо звук
+            if (stepTimer <= 0f)
+            {
+                PlayRandomFootstep();
+                stepTimer = stepInterval; // Скидаємо таймер
+            }
+        }
+        else
+        {
+            // Якщо стоїмо або в повітрі, скидаємо таймер, щоб наступний крок був миттєвим
+            stepTimer = 0f;
+        }
+    }
+    // Метод, який вибирає випадковий звук із масиву
+    private void PlayRandomFootstep()
+    {
+        if (footstepClips.Length > 0)
+        {
+            // Беремо випадковий індекс
+            int index = Random.Range(0, footstepClips.Length);
+            // Відтворюємо звук поверх інших (щоб вони не обривалися)
+            audioSource.PlayOneShot(footstepClips[index]);
+        }
     }
 }
