@@ -15,6 +15,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("Налаштування огляду")]
     public float mouseSensitivity = 30f;
 
+    [Header("Звуки")]
+    public AudioSource audioSource;
+    public AudioClip[] footstepClips;
+    public float stepInterval = 0.5f; 
+    private float stepTimer;
+
     private Vector2 moveInput;
     private Vector2 lookInput;
     private Vector3 velocity;
@@ -71,6 +77,8 @@ public class PlayerMovement : MonoBehaviour
         Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
         controller.Move(move * speed * Time.deltaTime);
 
+        HandleFootsteps(move);
+
         // --- ГРАВІТАЦІЯ ---
         if (controller.isGrounded && velocity.y < 0)
         {
@@ -79,5 +87,31 @@ public class PlayerMovement : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    private void HandleFootsteps(Vector3 moveDirection)
+    {
+        if (isGrounded && moveDirection.magnitude > 0.1f)
+        {
+            stepTimer -= Time.deltaTime;
+
+            if (stepTimer <= 0f)
+            {
+                PlayRandomFootstep();
+                stepTimer = stepInterval;
+            }
+        }
+        else
+        {
+            stepTimer = 0f;
+        }
+    }
+    private void PlayRandomFootstep()
+    {
+        if (footstepClips.Length > 0)
+        {
+            int index = Random.Range(0, footstepClips.Length);
+            audioSource.PlayOneShot(footstepClips[index]);
+        }
     }
 }

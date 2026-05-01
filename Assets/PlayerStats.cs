@@ -1,7 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // Обов'язково додаємо цей рядок!
+using UnityEngine.InputSystem;
+using System.IO; 
+
+[System.Serializable]
+public class PlayerSaveData
+{
+    public float health;
+}
 
 public class PlayerStats : MonoBehaviour
 {
@@ -11,33 +18,34 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Інтерфейс")]
     public Slider healthBar;
+    private string saveFilePath;
 
     void Start()
     {
-        currentHealth = maxHealth;
-
-        if (healthBar != null)
-        {
-            healthBar.maxValue = maxHealth;
-            healthBar.value = currentHealth;
-        }
+        saveFilePath = Path.Combine(Application.persistentDataPath, "player_stats.json");
+        LoadHealth();
     }
 
     void Update()
     {
-        // Перевіряємо, чи підключена клавіатура (щоб уникнути помилок)
         if (Keyboard.current != null)
         {
-            // ТЕСТ: Натисни 'T', щоб отримати шкоду (нова система)
             if (Keyboard.current.tKey.wasPressedThisFrame)
             {
                 TakeDamage(20f);
             }
 
-            // Повернення в меню на клавішу ESC (нова система)
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 SceneManager.LoadScene("MainMenu");
+            }
+            if (Keyboard.current.f5Key.wasPressedThisFrame)
+            {
+                SaveHealth();
+            }
+            if (Keyboard.current.f9Key.wasPressedThisFrame)
+            {
+                LoadHealth();
             }
         }
     }
@@ -45,11 +53,7 @@ public class PlayerStats : MonoBehaviour
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
-
-        if (healthBar != null)
-        {
-            healthBar.value = currentHealth;
-        }
+        UpdateHealthBar(); 
 
         if (currentHealth <= 0)
         {
@@ -57,10 +61,55 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    void UpdateHealthBar()
+    {
+        if (healthBar != null)
+        {
+            healthBar.value = currentHealth;
+        }
+    }
+
     void Die()
     {
         Debug.Log("Гравець помер!");
-        // Завантажуємо головне меню при смерті
+        if (File.Exists(saveFilePath))
+        {
+            File.Delete(saveFilePath);
+            Debug.Log("Збереження видалено після смерті.");
+        }
+
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void SaveHealth()
+    {
+        PlayerSaveData data = new PlayerSaveData();
+        data.health = currentHealth;
+        string json = JsonUtility.ToJson(data, true);
+        File.WriteAllText(saveFilePath, json);
+
+        Debug.Log("Гру збережено! ХП: " + currentHealth);
+    }
+
+    public void LoadHealth()
+    {
+        if (File.Exists(saveFilePath))
+        {
+            string json = File.ReadAllText(saveFilePath);
+            PlayerSaveData data = JsonUtility.FromJson<PlayerSaveData>(json);
+            currentHealth = data.health;
+            Debug.Log("Гру завантажено! ХП: " + currentHealth);
+        }
+        else
+        {
+            currentHealth = maxHealth;
+            Debug.Log("Файл збереження не знайдено. Старт з повним здоров'ям.");
+        }
+
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHealth;
+            UpdateHealthBar();
+        }
     }
 }
