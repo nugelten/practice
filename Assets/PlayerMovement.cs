@@ -16,9 +16,9 @@ public class PlayerMovement : MonoBehaviour
     public float mouseSensitivity = 30f;
 
     [Header("«вуки")]
-    public AudioSource audioSource; // —юди перет€гнути Audio Source гравц€
-    public AudioClip[] footstepClips; // ћасив дл€ к≥лькох звук≥в крок≥в
-    public float stepInterval = 0.5f; // „ас м≥ж кроками
+    public AudioSource audioSource;
+    public AudioClip[] footstepClips;
+    public float stepInterval = 0.5f; 
     private float stepTimer;
 
     private Vector2 moveInput;
@@ -64,8 +64,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // --- ќЅ≈–“јЌЌя (ћ»Ўј) ---
-        float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime;
-        float mouseY = lookInput.y * mouseSensitivity * Time.deltaTime;
+        float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime * 0.1f;
+        float mouseY = lookInput.y * mouseSensitivity * Time.deltaTime * 0.1f;
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f); // ўоб не крутити голову на 360 градус≥в
@@ -91,32 +91,26 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleFootsteps(Vector3 moveDirection)
     {
-        // якщо ми на земл≥ ≥ Ї вектор руху (гравець натискаЇ WASD)
         if (isGrounded && moveDirection.magnitude > 0.1f)
         {
             stepTimer -= Time.deltaTime;
 
-            //  оли таймер доходить до нул€, граЇмо звук
             if (stepTimer <= 0f)
             {
                 PlayRandomFootstep();
-                stepTimer = stepInterval; // —кидаЇмо таймер
+                stepTimer = stepInterval;
             }
         }
         else
         {
-            // якщо стоњмо або в пов≥тр≥, скидаЇмо таймер, щоб наступний крок був миттЇвим
             stepTimer = 0f;
         }
     }
-    // ћетод, €кий вибираЇ випадковий звук ≥з масиву
     private void PlayRandomFootstep()
     {
         if (footstepClips.Length > 0)
         {
-            // Ѕеремо випадковий ≥ндекс
             int index = Random.Range(0, footstepClips.Length);
-            // ¬≥дтворюЇмо звук поверх ≥нших (щоб вони не обривалис€)
             audioSource.PlayOneShot(footstepClips[index]);
         }
     }
